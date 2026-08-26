@@ -9,7 +9,7 @@ MONGO_URI = os.environ["MONGO_URI"]
 DB_NAME = "unibg_tedx_2026"
 MIN_VIDEOS = 3
 MAX_PATHS = 30
-MIN_TAG_LENGTH = 3
+MIN_TAG_LENGTH = 2
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -68,7 +68,6 @@ def lambda_handler(event, context):
             if not vid:
                 continue
 
-            # Speaker
             speakers = video.get("speakers", [])
             if not isinstance(speakers, list):
                 speakers = [speakers] if speakers else []
@@ -82,7 +81,6 @@ def lambda_handler(event, context):
                 if speaker:
                     speaker_map[speaker].add(vid)
 
-            # Topic / tag
             tags = video.get("tags", [])
             if isinstance(tags, list):
                 for tag in tags:
@@ -90,43 +88,21 @@ def lambda_handler(event, context):
                     if len(tag) >= MIN_TAG_LENGTH:
                         topic_map[tag].add(vid)
 
-        # Speaker paths
         speaker_paths = []
         for speaker, vids in speaker_map.items():
-            add_path(
-                speaker_paths,
-                "speaker",
-                speaker,
-                vids,
-                "speaker"
-            )
+            add_path(speaker_paths, "speaker", speaker, vids, "speaker")
 
-        speaker_paths.sort(
-            key=lambda p: p["video_count"],
-            reverse=True
-        )
+        speaker_paths.sort(key=lambda p: p["video_count"], reverse=True)
         speaker_paths = speaker_paths[:MAX_PATHS]
 
-        # Topic paths
         topic_paths = []
         for topic, vids in topic_map.items():
-            add_path(
-                topic_paths,
-                "topic",
-                topic,
-                vids,
-                "topic"
-            )
+            add_path(topic_paths, "topic", topic, vids, "topic")
 
-        topic_paths.sort(
-            key=lambda p: p["video_count"],
-            reverse=True
-        )
+        topic_paths.sort(key=lambda p: p["video_count"], reverse=True)
         topic_paths = topic_paths[:MAX_PATHS]
 
-        # Remove highly similar topic paths
         final_topic_paths = []
-
         for path in topic_paths:
             if not any(
                 jaccard(path["videos"], other["videos"]) >= 0.80
