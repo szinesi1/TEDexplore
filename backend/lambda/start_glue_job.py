@@ -12,7 +12,6 @@ client = boto3.client("glue")
 GLUE_JOB_NAMES = [
     "TEDexplore-Load-Aggregate-Model",
     "TEDexplore-Generate-Recommendations",
-    "TEDexplore-Create-Learning-Paths"
 ]
 
 
